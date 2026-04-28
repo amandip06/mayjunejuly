@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TARGET26 — Mission Control</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js for graphs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       LOADING SCREEN
+  ═══════════════════════════════════════════ -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-inner">
+      <div class="loading-ring"></div>
+      <div class="loading-ring ring2"></div>
+      <div class="loading-ring ring3"></div>
+      <div class="loading-logo">T26</div>
+      <p class="loading-text">INITIALIZING MISSION CONTROL...</p>
+      <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       DEACTIVATED SCREEN
+  ═══════════════════════════════════════════ -->
+  <div id="deactivatedScreen" class="deactivated-screen hidden">
+    <div class="deactivated-content">
+      <div class="deactivated-icon">⊘</div>
+      <h1 class="deactivated-title">SYSTEM OFFLINE</h1>
+      <p class="deactivated-sub">This mission control panel has been deactivated.</p>
+      <p class="deactivated-sub2">Contact system administrator to restore access.</p>
+      <button class="btn-reactivate" onclick="showReactivatePrompt()">REACTIVATE ›</button>
+    </div>
+    <div class="deactivated-grid"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       LOGIN SCREEN
+  ═══════════════════════════════════════════ -->
+  <div id="loginScreen" class="login-screen hidden">
+    <div class="login-bg-particles" id="particles"></div>
+    <div class="login-card">
+      <div class="login-badge">CLASSIFIED</div>
+      <div class="login-logo">T<span>26</span></div>
+      <h2 class="login-title">MISSION CONTROL</h2>
+      <p class="login-sub">TARGET TRACKING SYSTEM · 2026</p>
+      <div class="login-form">
+        <div class="input-wrap">
+          <label>ACCESS CODE</label>
+          <input type="password" id="passwordInput" placeholder="Enter access code..." maxlength="20" />
+          <div class="input-glow"></div>
+        </div>
+        <div id="loginError" class="login-error hidden">⚠ INVALID ACCESS CODE</div>
+        <button class="btn-login" onclick="handleLogin()">
+          <span>AUTHENTICATE</span>
+          <div class="btn-shine"></div>
+        </button>
+      </div>
+      <p class="login-hint">Default: TARGET26</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN APP
+  ═══════════════════════════════════════════ -->
+  <div id="mainApp" class="main-app hidden">
+
+    <!-- TOP NAV -->
+    <nav class="topnav">
+      <div class="topnav-left">
+        <div class="nav-logo">T<span>26</span></div>
+        <div class="nav-title">MISSION CONTROL</div>
+      </div>
+      <div class="topnav-right">
+        <button class="nav-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle Theme">◑</button>
+        <button class="nav-btn" onclick="showSection('settings')" title="Settings">⚙</button>
+        <button class="nav-btn" onclick="handleLogout()" title="Logout">⏻</button>
+      </div>
+    </nav>
+
+    <!-- SIDEBAR NAV -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <button class="sidenav-btn active" data-section="dashboard" onclick="showSection('dashboard')">
+          <span class="sidenav-icon">◈</span><span class="sidenav-label">Dashboard</span>
+        </button>
+        <button class="sidenav-btn" data-section="today" onclick="showSection('today')">
+          <span class="sidenav-icon">◉</span><span class="sidenav-label">Today</span>
+        </button>
+        <button class="sidenav-btn" data-section="calendar" onclick="showSection('calendar')">
+          <span class="sidenav-icon">▦</span><span class="sidenav-label">Calendar</span>
+        </button>
+        <button class="sidenav-btn" data-section="history" onclick="showSection('history')">
+          <span class="sidenav-icon">◷</span><span class="sidenav-label">History</span>
+        </button>
+        <button class="sidenav-btn" data-section="analytics" onclick="showSection('analytics')">
+          <span class="sidenav-icon">◌</span><span class="sidenav-label">Analytics</span>
+        </button>
+        <button class="sidenav-btn" data-section="settings" onclick="showSection('settings')">
+          <span class="sidenav-icon">⚙</span><span class="sidenav-label">Settings</span>
+        </button>
+      </nav>
+      <div class="sidebar-streak">
+        <div class="streak-label">STREAK</div>
+        <div class="streak-count" id="sidebarStreak">0</div>
+        <div class="streak-flame">🔥</div>
+      </div>
+    </aside>
+
+    <!-- CONTENT AREA -->
+    <main class="content-area">
+
+      <!-- ── DASHBOARD ── -->
+      <section id="sec-dashboard" class="section active">
+        <div class="section-header">
+          <h1>COMMAND DASHBOARD</h1>
+          <div class="section-date" id="todayDateDisplay"></div>
+        </div>
+
+        <!-- Motivational quote -->
+        <div class="quote-card" id="quoteCard">
+          <div class="quote-icon">"</div>
+          <p id="quoteText">Loading...</p>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="stats-grid">
+          <div class="stat-card card-blue">
+            <div class="stat-label">MISSION DAYS</div>
+            <div class="stat-val" id="statTotalDays">62</div>
+            <div class="stat-sub">13 May → 13 Jul</div>
+            <div class="stat-glow"></div>
+          </div>
+          <div class="stat-card card-green">
+            <div class="stat-label">COMPLETED DAYS</div>
+            <div class="stat-val" id="statCompletedDays">0</div>
+            <div class="stat-sub">All tasks done</div>
+            <div class="stat-glow"></div>
+          </div>
+          <div class="stat-card card-red">
+            <div class="stat-label">MISSED DAYS</div>
+            <div class="stat-val" id="statMissedDays">0</div>
+            <div class="stat-sub">Incomplete days</div>
+            <div class="stat-glow"></div>
+          </div>
+          <div class="stat-card card-gold">
+            <div class="stat-label">BEST STREAK</div>
+            <div class="stat-val" id="statBestStreak">0</div>
+            <div class="stat-sub">Consecutive days 🔥</div>
+            <div class="stat-glow"></div>
+          </div>
+        </div>
+
+        <!-- Overall progress bar -->
+        <div class="progress-card">
+          <div class="progress-header">
+            <span>OVERALL MISSION PROGRESS</span>
+            <span id="overallPercent">0%</span>
+          </div>
+          <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="overallProgressBar" style="width:0%"></div>
+          </div>
+          <div class="progress-info" id="progressDaysInfo">Day 0 of 62</div>
+        </div>
+
+        <!-- Task-wise progress bars -->
+        <div class="taskbars-grid">
+          <div class="taskbar-item">
+            <div class="taskbar-head">
+              <span class="taskbar-icon">🇪🇸</span>
+              <span>Learn Spanish</span>
+              <span class="taskbar-pct" id="pctSpanish">0%</span>
+            </div>
+            <div class="taskbar-outer"><div class="taskbar-inner bar-cyan" id="barSpanish" style="width:0%"></div></div>
+            <div class="taskbar-sub">30 min/day · <span id="timeSpanish">0h 0m</span> total</div>
+          </div>
+          <div class="taskbar-item">
+            <div class="taskbar-head">
+              <span class="taskbar-icon">💪</span>
+              <span>Workout</span>
+              <span class="taskbar-pct" id="pctWorkout">0%</span>
+            </div>
+            <div class="taskbar-outer"><div class="taskbar-inner bar-green" id="barWorkout" style="width:0%"></div></div>
+            <div class="taskbar-sub">1 hr/day · <span id="timeWorkout">0h 0m</span> total</div>
+          </div>
+          <div class="taskbar-item">
+            <div class="taskbar-head">
+              <span class="taskbar-icon">☕</span>
+              <span>Learn Java</span>
+              <span class="taskbar-pct" id="pctJava">0%</span>
+            </div>
+            <div class="taskbar-outer"><div class="taskbar-inner bar-orange" id="barJava" style="width:0%"></div></div>
+            <div class="taskbar-sub">1h 30m/day · <span id="timeJava">0h 0m</span> total</div>
+          </div>
+        </div>
+
+        <!-- Mini chart -->
+        <div class="chart-card">
+          <h3 class="chart-title">WEEKLY ACTIVITY</h3>
+          <canvas id="dashboardChart" height="120"></canvas>
+        </div>
+      </section>
+
+      <!-- ── TODAY ── -->
+      <section id="sec-today" class="section">
+        <div class="section-header">
+          <h1>TODAY'S MISSION</h1>
+          <div class="section-date" id="todayDateDisplay2"></div>
+        </div>
+
+        <div class="today-date-nav">
+          <button class="date-nav-btn" onclick="navigateDate(-1)">◄ PREV</button>
+          <div class="today-date-label" id="selectedDateLabel">—</div>
+          <button class="date-nav-btn" onclick="navigateDate(1)">NEXT ►</button>
+        </div>
+
+        <div class="today-status-bar" id="todayStatusBar">
+          <span id="todayStatusText">Select a day to track</span>
+        </div>
+
+        <div class="tasks-container" id="tasksContainer">
+          <!-- Tasks rendered by JS -->
+        </div>
+
+        <div class="today-summary-card" id="todaySummaryCard">
+          <div class="ts-item">
+            <div class="ts-label">COMPLETED</div>
+            <div class="ts-val green" id="tsCompleted">0/3</div>
+          </div>
+          <div class="ts-item">
+            <div class="ts-label">TIME DONE</div>
+            <div class="ts-val cyan" id="tsTime">0h 0m</div>
+          </div>
+          <div class="ts-item">
+            <div class="ts-label">COMPLETION</div>
+            <div class="ts-val gold" id="tsPercent">0%</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── CALENDAR ── -->
+      <section id="sec-calendar" class="section">
+        <div class="section-header">
+          <h1>MISSION CALENDAR</h1>
+        </div>
+        <div class="calendar-legend">
+          <span class="leg-item"><span class="leg-dot dot-full"></span>Full Complete</span>
+          <span class="leg-item"><span class="leg-dot dot-partial"></span>Partial</span>
+          <span class="leg-item"><span class="leg-dot dot-missed"></span>Missed</span>
+          <span class="leg-item"><span class="leg-dot dot-future"></span>Future</span>
+          <span class="leg-item"><span class="leg-dot dot-today"></span>Today</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid">
+          <!-- Calendar rendered by JS -->
+        </div>
+      </section>
+
+      <!-- ── HISTORY ── -->
+      <section id="sec-history" class="section">
+        <div class="section-header">
+          <h1>MISSION HISTORY</h1>
+          <button class="btn-danger" onclick="confirmClearHistory()">⚠ CLEAR HISTORY</button>
+        </div>
+        <div class="history-filters">
+          <button class="filter-btn active" onclick="filterHistory('all', this)">ALL</button>
+          <button class="filter-btn" onclick="filterHistory('complete', this)">COMPLETE</button>
+          <button class="filter-btn" onclick="filterHistory('partial', this)">PARTIAL</button>
+          <button class="filter-btn" onclick="filterHistory('missed', this)">MISSED</button>
+        </div>
+        <div class="history-list" id="historyList">
+          <!-- History items rendered by JS -->
+        </div>
+      </section>
+
+      <!-- ── ANALYTICS ── -->
+      <section id="sec-analytics" class="section">
+        <div class="section-header">
+          <h1>ANALYTICS</h1>
+        </div>
+
+        <div class="analytics-stats">
+          <div class="an-stat">
+            <div class="an-label">CURRENT STREAK</div>
+            <div class="an-val" id="anStreak">0 🔥</div>
+          </div>
+          <div class="an-stat">
+            <div class="an-label">BEST STREAK</div>
+            <div class="an-val" id="anBestStreak">0 ⭐</div>
+          </div>
+          <div class="an-stat">
+            <div class="an-label">OVERALL %</div>
+            <div class="an-val" id="anOverall">0%</div>
+          </div>
+          <div class="an-stat">
+            <div class="an-label">TOTAL TIME</div>
+            <div class="an-val" id="anTotalTime">0h</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3 class="chart-title">DAILY PROGRESS (LAST 14 DAYS)</h3>
+            <canvas id="dailyChart" height="200"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3 class="chart-title">TASK-WISE COMPLETION</h3>
+            <canvas id="taskChart" height="200"></canvas>
+          </div>
+          <div class="chart-card full-width">
+            <h3 class="chart-title">OVERALL MISSION PROGRESS</h3>
+            <canvas id="overallChart" height="150"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SETTINGS ── -->
+      <section id="sec-settings" class="section">
+        <div class="section-header">
+          <h1>SETTINGS</h1>
+        </div>
+
+        <div class="settings-grid">
+
+          <div class="settings-card">
+            <h3 class="settings-title">🔒 CHANGE PASSWORD</h3>
+            <div class="input-wrap">
+              <label>CURRENT PASSWORD</label>
+              <input type="password" id="currentPwd" placeholder="Current password..." />
+            </div>
+            <div class="input-wrap">
+              <label>NEW PASSWORD</label>
+              <input type="password" id="newPwd" placeholder="New password..." />
+            </div>
+            <div class="input-wrap">
+              <label>CONFIRM NEW PASSWORD</label>
+              <input type="password" id="confirmPwd" placeholder="Confirm new password..." />
+            </div>
+            <div id="pwdMsg" class="settings-msg hidden"></div>
+            <button class="btn-primary" onclick="changePassword()">UPDATE PASSWORD</button>
+          </div>
+
+          <div class="settings-card">
+            <h3 class="settings-title">⚡ SYSTEM CONTROL</h3>
+            <p class="settings-desc">Activate or deactivate this mission control panel. When deactivated, the panel will show an offline screen.</p>
+            <div class="toggle-row">
+              <span>Panel Status</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="activationToggle" onchange="toggleActivation()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div id="activationStatus" class="activation-status">● ACTIVE</div>
+          </div>
+
+          <div class="settings-card">
+            <h3 class="settings-title">📤 EXPORT / IMPORT</h3>
+            <p class="settings-desc">Export your progress as a JSON backup or import from a previous backup.</p>
+            <div class="export-btns">
+              <button class="btn-primary" onclick="exportProgress()">⬆ EXPORT JSON</button>
+              <button class="btn-secondary" onclick="document.getElementById('importFile').click()">⬇ IMPORT JSON</button>
+              <input type="file" id="importFile" accept=".json" onchange="importProgress(event)" style="display:none" />
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h3 class="settings-title">🎨 APPEARANCE</h3>
+            <div class="toggle-row">
+              <span>Dark Mode</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="themeToggle" onchange="toggleThemeFromSettings()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row" style="margin-top:16px">
+              <span>Animations</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="animToggle" checked onchange="toggleAnimations()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODALS
+  ═══════════════════════════════════════════ -->
+
+  <!-- Confirm Clear History Modal -->
+  <div id="modalClear" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-icon">⚠</div>
+      <h3>CLEAR ALL HISTORY?</h3>
+      <p>This will permanently delete all your progress data. This action cannot be undone.</p>
+      <div class="modal-btns">
+        <button class="btn-danger" onclick="clearHistory()">DELETE ALL</button>
+        <button class="btn-secondary" onclick="closeModal('modalClear')">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reactivate Modal -->
+  <div id="modalReactivate" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>REACTIVATE SYSTEM</h3>
+      <div class="input-wrap">
+        <label>ACCESS CODE</label>
+        <input type="password" id="reactivatePwd" placeholder="Enter password..." />
+      </div>
+      <div id="reactivateErr" class="login-error hidden">⚠ INVALID CODE</div>
+      <div class="modal-btns">
+        <button class="btn-primary" onclick="doReactivate()">REACTIVATE</button>
+        <button class="btn-secondary" onclick="closeModal('modalReactivate')">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
